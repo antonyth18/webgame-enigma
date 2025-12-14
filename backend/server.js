@@ -1,13 +1,13 @@
-const connectToMongo = require("./db");
-
-connectToMongo();
-
 const express = require("express");
+const mainRouter = require("./routes/index");
+const cors = require("cors");
+
 const app = express();
-const port = 5000;
 
-app.use(express.json());
+app.use(cors());
+app.use(express.json())
+app.use("/api/v1", mainRouter);
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(3000, () => {
+    console.log("Server running on port 3000....");
 });

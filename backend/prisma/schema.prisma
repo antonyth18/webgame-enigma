@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamName  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+
+model Room {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  code      String   @unique
+  teamA     String[]
+  teamB     String[]
+  rounds    Round[]
+  createdAt DateTime @default(now())
+}
+
+model Round {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  roundNumber Int
+
+  // relation to Room
+  roomId String @db.ObjectId
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  // relation to Question A
+  questionAId String   @db.ObjectId
+  questionA   Question @relation("QuestionA", fields: [questionAId], references: [id])
+
+  // relation to Question B
+  questionBId String   @db.ObjectId
+  questionB   Question @relation("QuestionB", fields: [questionBId], references: [id])
+
+  solvedA   Boolean @default(false)
+  solvedB   Boolean @default(false)
+  hintFromB String?
+}
+
+model Question {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  text     String
+  answer   String
+  hintForA String?
+
+  // back-relations
+  roundsA Round[] @relation("QuestionA")
+  roundsB Round[] @relation("QuestionB")
+}
