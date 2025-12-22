@@ -4,56 +4,104 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
+////////////////////
+// USER
+////////////////////
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
   teamName  String
-  email     String   @unique
+  email     String       @unique
   password  String
-  createdAt DateTime @default(now())
+
+  memberships RoomMember[]
+
+  createdAt DateTime     @default(now())
 }
 
-
+////////////////////
+// ROOM
+////////////////////
 model Room {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  code      String   @unique
-  teamA     String[]
-  teamB     String[]
+  code      String       @unique
+
+  members   RoomMember[]
   rounds    Round[]
-  createdAt DateTime @default(now())
+
+  scoreA    Int          @default(0)
+  scoreB    Int          @default(0)
+
+  createdAt DateTime     @default(now())
 }
 
+////////////////////
+// ROOM ↔ USER JOIN
+////////////////////
+model RoomMember {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @db.ObjectId
+  roomId String @db.ObjectId
+
+  user   User @relation(fields: [userId], references: [id])
+  room   Room @relation(fields: [roomId], references: [id])
+
+  team   Team
+
+  @@unique([userId, roomId])
+}
+
+////////////////////
+// ROUND
+////////////////////
 model Round {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   roundNumber Int
 
-  // relation to Room
   roomId String @db.ObjectId
   room   Room   @relation(fields: [roomId], references: [id])
 
-  // relation to Question A
   questionAId String   @db.ObjectId
   questionA   Question @relation("QuestionA", fields: [questionAId], references: [id])
 
-  // relation to Question B
   questionBId String   @db.ObjectId
   questionB   Question @relation("QuestionB", fields: [questionBId], references: [id])
 
-  solvedA   Boolean @default(false)
-  solvedB   Boolean @default(false)
+  solvedA Boolean @default(false)
+  solvedB Boolean @default(false)
+
+  pointsA Int @default(0)
+  pointsB Int @default(0)
+
   hintFromB String?
+
+  createdAt DateTime @default(now())
 }
 
+////////////////////
+// QUESTION
+////////////////////
 model Question {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
   text     String
   answer   String
+  points   Int
   hintForA String?
 
-  // back-relations
   roundsA Round[] @relation("QuestionA")
   roundsB Round[] @relation("QuestionB")
+
+  createdAt DateTime @default(now())
+}
+
+////////////////////
+// ENUM
+////////////////////
+enum Team {
+  A
+  B
 }
